@@ -1,0 +1,153 @@
+/* GENERAL STYLING AND LAYOUT */
+:root {
+    --color-dark-background: #1e1e1e; /* Dark background color */
+    --color-card-background: #333333; /* Dark card color */
+    --color-text-light: #ffffff; /* White text */
+    --color-primary-accent: #c084fc; /* Purple/Accent color for active state */
+    --color-gauge-green: #50c878; /* Green for healthy gauges */
+    --color-gauge-orange: #ff9900; /* Orange for temp */
+    --color-gauge-blue: #00bfff; /* Blue for wind */
+    --sidebar-width: 250px;
+}
+
+body {
+    margin: 0;
+    font-family: sans-serif; /* Use your custom font here */
+    background-color: var(--color-dark-background);
+    color: var(--color-text-light);
+    overflow-x: hidden;
+}
+
+#weather-app {
+    display: flex; /* Sets up the main container for sidebar + content */
+    min-height: 100vh;
+}
+
+/* SIDEBAR STYLING */
+#sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--color-card-background);
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+}
+
+#station-header h1 {
+    font-size: 1.2em;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+    margin-bottom: auto; /* Pushes the next items to the bottom */
+}
+
+nav li {
+    padding: 12px 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+nav li a {
+    color: var(--color-text-light);
+    text-decoration: none;
+    display: block;
+}
+
+/* Simulate the active page block */
+.active-page {
+    background-color: var(--color-primary-accent);
+    border-radius: 0 50px 50px 0;
+    margin-right: -20px; /* Overlap into the main content area slightly */
+}
+
+#info-section, #dark-mode-toggle {
+    width: 100%;
+    padding: 10px 20px;
+    margin-top: 10px;
+}
+
+#dark-mode-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+}
+
+/* MAIN CONTENT LAYOUT */
+#dashboard-content {
+    flex-grow: 1; /* Takes up the rest of the space */
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px; /* Space between rows */
+}
+
+/* Gauge Row Styles (using Flexbox) */
+.gauge-row, .middle-row { 
+    display: flex; 
+    gap: 20px; 
+    width: 100%; 
+    flex-wrap: nowrap; /* CRITICAL: Prevents elements from dropping to a new line */
+    align-items: flex-start; /* Ensures all items align nicely at the top */
+}
+
+.gauge-card {
+    background-color: var(--color-card-background);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.large-gauge {
+    flex: 1; /* Makes them equal width in the row */
+    min-height: 200px; /* Height for the circular display */
+    font-size: 2.5em;
+    font-weight: bold;
+}
+
+/* Middle Row specific layout (Rainfall, Pressure, Bar) */
+.middle-row {
+    align-items: stretch; /* Ensures cards stretch to fill height */
+}
+
+.pressure-block {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 20px;
+}
+
+.pressure-card {
+    flex: 1; /* Makes Relative and Absolute equal height */
+    min-height: 90px;
+    font-size: 1.5em;
+}
+
+.vertical-bar {
+    width: 100px; /* Fixed width for the vertical element */
+    background-color: #555555; /* Different background for the vertical bar */
+    padding: 5px;
+}
+
+/* Graph Row */
+.graph-row {
+    width: 100%;
+}
+
+.graph-area {
+    flex-grow: 1;
+    min-height: 300px;
+    text-align: left;
+    padding: 15px;
+}

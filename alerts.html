@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Howth Weather - Alerts</title>
+    
+    <style>
+        /* BASE STYLES & THEME */
+        :root {
+            --color-dark-background: #121212; --color-card-background: #2b2b2b;
+            --color-sidebar-background: #1e1e1e; --color-text-light: #ffffff;
+            --color-text-dim: #ccc; --color-accent-blue: #4a90e2; 
+            --sidebar-width: 280px; --border-radius-large: 16px; --border-radius-small: 8px;
+        }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--color-dark-background); color: var(--color-text-light); overflow-x: hidden; }
+        #weather-app { display: flex; min-height: 100vh; }
+
+        /* SIDEBAR STYLING --- STICKY FIX --- */
+        #sidebar { 
+            width: var(--sidebar-width); 
+            background-color: var(--color-sidebar-background); 
+            padding: 20px 0; 
+            display: flex; 
+            flex-direction: column; 
+            border-radius: 0 var(--border-radius-large) var(--border-radius-large) 0; 
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5); 
+            z-index: 10;
+            position: sticky; top: 0; height: 100vh;
+        }
+        .logo-container { width: 80px; height: 80px; margin: 0 auto 10px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
+        #station-header img { display: block; width: 100%; max-width: 100px; height: auto; margin: 0 auto; }
+        #station-header h1 { font-size: 1.4em; font-weight: 300; text-align: center; margin-bottom: 25px; color: var(--color-text-dim); }
+        
+        /* NAV LIST --- SCROLL FIX --- */
+        nav ul { 
+            list-style: none; padding: 0; width: 100%; 
+            flex-grow: 1; overflow-y: auto;
+        }
+        .nav-item { padding: 10px 20px 10px 50px; cursor: pointer; transition: background-color 0.2s; margin: 5px 0; padding-right: 20px; }
+        .nav-item a { color: var(--color-text-dim); text-decoration: none; display: block; font-size: 1.1em; }
+        .active-page { 
+            background-color: var(--color-accent-blue); 
+            border-radius: 0 25px 25px 0; 
+            margin-right: 10px; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); 
+        }
+        .active-page a { color: var(--color-text-light); }
+        
+        #info-section { margin-top: auto; }
+        #info-section, #dark-mode-toggle { padding: 10px 20px 10px 50px; cursor: pointer; font-size: 0.9em; opacity: 0.7; }
+        
+        /* MAIN ALERTS CONTENT */
+        #dashboard-content { flex-grow: 1; padding: 30px; max-width: 1000px; margin: 0 auto; }
+        .alert-card { background-color: var(--color-card-background); border-radius: var(--border-radius-small); padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); border-left: 8px solid; transition: all 0.3s ease; }
+        .alert-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .alert-level { font-weight: bold; padding: 5px 10px; border-radius: 4px; text-transform: uppercase; text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.3); }
+        .alert-headline { font-size: 1.4em; font-weight: 600; margin-top: 5px; }
+        .alert-details { font-size: 0.9em; margin-top: 10px; line-height: 1.5; }
+
+        /* RESPONSIVE SCALING (MOBILE) */
+        @media (max-width: 600px) {
+            #weather-app { flex-direction: column; } 
+            #sidebar { 
+                width: 100%; border-radius: 0; padding: 10px 0; 
+                position: static; height: auto;
+            }
+            #station-header h1, #info-section { display: none; }
+            #station-header { text-align: center; margin: 0 auto; }
+            nav ul { 
+                display: flex; justify-content: space-around; padding: 0 10px; 
+                overflow-x: auto; white-space: nowrap; 
+                flex-grow: 0; overflow-y: hidden;
+            }
+            .nav-item { padding: 5px 10px; margin: 0; flex-shrink: 0; }
+            .active-page { margin-right: 0; border-radius: var(--border-radius-small); }
+            #dashboard-content { padding: 15px; max-width: none; margin: 0; }
+            .alert-header { flex-direction: column; align-items: flex-start; }
+            .alert-times { margin-top: 10px; font-size: 0.8em; }
+        }
+
+        /* LIGHT MODE STYLES */
+        body.light-mode {
+            --color-dark-background: #f4f7f6; --color-card-background: #ffffff;
+            --color-text-light: #333333; --color-sidebar-background: #eeeeee;
+            --color-text-dim: #555555;
+            background-color: var(--color-dark-background);
+            color: var(--color-text-light);
+        }
+        body.light-mode #sidebar { background-color: var(--color-sidebar-background); box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); }
+        body.light-mode .alert-card { background-color: var(--color-card-background); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+        body.light-mode #station-header h1 { color: var(--color-text-dim); }
+        body.light-mode .nav-item a { color: var(--color-text-dim); }
+        body.light-mode .active-page a { color: var(--color-text-light); }
+
+        /* Toggle Switch Styles */
+        #dark-mode-toggle { display: flex; justify-content: space-between; align-items: center; cursor: default; }
+        #dark-mode-toggle label { cursor: pointer; }
+        .switch-container { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch-container input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; }
+        .slider.round { border-radius: 34px; }
+        .slider.round:before { border-radius: 50%; }
+        input:checked + .slider { background-color: var(--color-accent-blue); }
+        input:checked + .slider:before { transform: translateX(22px); }
+    </style>
+</head>
+<body>
+
+    <div id="weather-app">
+        <aside id="sidebar">
+            <div id="station-header">
+                <div class="logo-container"><img src="howthw.png" alt="Howth Weather Station Logo"></div>
+                <h1>Howth Weather Station</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li class="nav-item"><a href="index.html">Home</a></li>
+                    <li class="nav-item"><a href="widgets.html">Widgets</a></li>
+                    <li class="nav-item active-page"><a href="alerts.html">Weather alerts</a></li>
+                    <li class="nav-item"><a href="windy.html">Windy.com</a></li>
+                </ul>
+            </nav>
+            <div id="info-section"><p>About</p></div>
+            <div id="dark-mode-toggle">
+                <label for="theme-switch">Light mode</label>
+                <label class="switch-container">
+                    <input type="checkbox" id="theme-switch">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </aside>
+
+        <main id="dashboard-content">
+            <h2>⚠️ Current Weather Warnings</h2>
+            <section id="alerts-container"><p>Loading alerts...</p></section>
+        </main>
+    </div>
+    
+    <script>
+        const themeSwitch = document.getElementById('theme-switch');
+        const body = document.body;
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                themeSwitch.checked = true;
+            } else {
+                body.classList.remove('light-mode');
+                themeSwitch.checked = false;
+            }
+        }
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            applyTheme(savedTheme);
+        } else {
+            applyTheme('dark');
+        }
+        themeSwitch.addEventListener('change', function() {
+            if (this.checked) {
+                body.classList.add('light-mode');
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.classList.remove('light-mode');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+    </script>
+
+    <script>
+        const MET_EIREANN_URL = 'https://www.met.ie/Open_Data/json/warning_IRELAND.json'; 
+        const PROXY_URL = 'https://proxy.corsfix.com/?';
+        const ALERTS_DATA_URL = PROXY_URL + MET_EIREANN_URL;
+
+        const ALERT_LEVEL_COLORS = { 'YELLOW': '#FFD700', 'ORANGE': '#FF8C00', 'RED': '#FF0000', 'STATUS': '#38B000' };
+
+        function formatTime(isoString) {
+            const options = { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Dublin' };
+            try { return new Date(isoString).toLocaleTimeString('en-IE', options); } catch (e) { return 'N/A'; }
+        }
+
+        async function fetchAlertsAndRender() {
+            const container = document.getElementById('alerts-container');
+            container.innerHTML = '<p style="padding: 20px;">Fetching live alerts...</p>';
+            try {
+                const response = await fetch(ALERTS_DATA_URL); 
+                if (!response.ok) throw new Error(`Failed to fetch alerts: ${response.status} ${response.statusText}`);
+                
+                const rawData = await response.json(); 
+                const ALERTS_DATA = Array.isArray(rawData) ? rawData : [];
+                container.innerHTML = ''; 
+
+                if (ALERTS_DATA.length === 0) {
+                    container.innerHTML = '<p style="padding: 20px;">No active weather warnings currently issued by Met Éireann.</p>';
+                    return;
+                }
+                ALERTS_DATA.forEach(alert => {
+                    const level = (alert.level || 'STATUS').toUpperCase();
+                    const color = ALERT_LEVEL_COLORS[level] || '#444444';
+                    const textColor = (level === 'YELLOW' || level === 'STATUS') ? '#000' : '#FFF';
+                    const alertHtml = `
+                        <div class="alert-card" style="border-color: ${color};">
+                            <div class="alert-header">
+                                <span class="alert-level" style="background-color: ${color}; color: ${textColor};">${level}</span>
+                                <div class="alert-times">
+                                    <strong>Issued:</strong> ${formatTime(alert.issued)} &bull; <strong>Starts:</strong> ${formatTime(alert.onset)} &bull; DASHBOARD<strong>Ends:</strong> ${formatTime(alert.expiry)}
+                                </div>
+                            </div>
+                            <div class="alert-headline">${alert.headline}</div>
+                            <div class="alert-details"><p>${alert.description}</p></div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', alertHtml);
+                });
+            } catch (error) {
+                container.innerHTML = `<p style="color: #ff0000; padding: 20px;">⚠️ Error: Could not load live alerts directly from Met Éireann due to security/CORS restrictions.</p>`;
+                console.error('Fetch error:', error);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', fetchAlertsAndRender);
+        setInterval(fetchAlertsAndRender, 300000);
+    </script>
+</body>
+</html>

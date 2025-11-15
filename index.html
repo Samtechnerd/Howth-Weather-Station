@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Howth Weather Station Dashboard</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/justgage/1.4.0/justgage.min.js"></script>
+    
+    <style>
+        /* BASE STYLES & THEME */
+        :root {
+            --color-dark-background: #1e1e1e; 
+            --color-card-background: #2b2b2b;
+            --color-sidebar-background: #1e1e1e;
+            --color-text-light: #ffffff;
+            --color-text-dim: #ccc;
+            --color-accent-blue: #4a90e2; 
+            --color-gauge-track: #444444; 
+            --color-gauge-red: #EA4228;
+            --color-gauge-yellow: #F5CD19;
+            --color-gauge-green: #5BE12C;
+            --color-gauge-blue: #00bcd4;
+            --sidebar-width: 300px;
+            --border-radius-large: 16px;
+            --border-radius-small: 8px;
+        }
+        body { margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--color-dark-background); color: var(--color-text-light); overflow-x: hidden; }
+        #weather-app { display: flex; min-height: 100vh; }
+
+        /* SIDEBAR STYLING (STICKY) */
+        #sidebar { 
+            width: var(--sidebar-width); background-color: var(--color-sidebar-background); 
+            padding: 20px 0; display: flex; flex-direction: column; 
+            border-radius: 0 var(--border-radius-large) var(--border-radius-large) 0; 
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5); z-index: 10;
+            position: sticky; top: 0; height: 100vh;
+        }
+        /* Logo Size */
+        .logo-container { width:200px; height:200px; margin: 0 auto 10px; border-radius: 50%; display: flex; justify-content: center; align-items: center; }
+        #station-header img { display: block; width: 100%; max-width: 500 height: auto; margin: 0 auto; }
+        #station-header h1 { font-size: 1.4em; font-weight: 300; text-align: center; margin-bottom: 25px; color: var(--color-text-dim); }
+        
+        nav ul { list-style: none; padding: 0; width: 100%; flex-grow: 1; overflow-y: auto; }
+        .nav-item { padding: 10px 20px 10px 50px; cursor: pointer; transition: background-color 0.2s; margin: 5px 0; padding-right: 20px; }
+        
+        /* FIX FOR PURPLE/UNDERLINE LINKS */
+        .nav-item a, 
+        .nav-item a:visited { 
+            color: var(--color-text-dim) !important; 
+            text-decoration: none !important; 
+        }
+        
+        .active-page { background-color: var(--color-accent-blue); border-radius: 0 25px 25px 0; margin-right: 10px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); }
+        .active-page a { color: var(--color-text-light) !important; } /* Ensure active link is always white */
+        #info-section { margin-top: auto; } 
+        #info-section, #dark-mode-toggle { padding: 10px 20px 10px 50px; cursor: pointer; font-size: 0.9em; opacity: 0.7; }
+
+        /* MAIN DASHBOARD CONTENT */
+        #dashboard-content { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .gauge-card { 
+            background-color: var(--color-card-background); 
+            border-radius: var(--border-radius-small); 
+            padding: 20px; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-start;
+            align-items: center; 
+        }
+        .large-gauge { flex: 1; min-height: 280px; }
+        
+        /* JustGage STYLES */
+        .gauge-container { width: 220px; height: 180px; position: relative; }
+        .gauge-canvas { width: 100%; height: 100%; }
+        .gauge-container tspan { display: none; } 
+        
+        .gauge-text-block { text-align: center; width: 100%; margin-top: -30px; position: relative; z-index: 5; }
+        .gauge-value { font-size: 3em; font-weight: bold; line-height: 1em; }
+        .gauge-unit, .gauge-label { font-size: 0.9em; font-weight: 300; opacity: 0.8; margin-top: 5px; }
+        .gauge-label { color: var(--color-text-light); }
+        
+        .gauge-range { display: block; font-size: 0.8em; opacity: 0.7; margin-top: 3px; }
+        
+        /* --- 360 GAUGE STYLES --- */
+        .gauge-container-360 { width: 200px; height: 200px; position: relative; }
+        .gauge-container-360 tspan { display: none; } 
+        .gauge-container-360 text { font-family: 'Segoe UI', Tahoma; fill: var(--color-text-dim); font-size: 14px; font-weight: 600; }
+        
+        .gauge-text-overlay-360 { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; width: 100%; pointer-events: none; }
+        .gauge-text-overlay-360 .gauge-value { font-size: 2.2em; }
+        
+        /* RAINFALL STATS BLOCK */
+        .rainfall-stats-container { display: flex; flex: 2; gap: 20px; }
+        .rainfall-stats-block { flex: 1; padding: 10px 0 0 10px; text-align: left; }
+        .rainfall-stats-list { list-style: none; padding: 0; font-size: 0.95em; }
+        .rainfall-stats-list li { margin-bottom: 5px; opacity: 0.9; }
+
+        /* PRESSURE BLOCK */
+        .pressure-block { display: flex; flex-direction: column; flex: 1; gap: 20px; min-height: 90px; }
+        .pressure-card { flex: 1; min-height: 90px; font-size: 1.2em; text-align: left; padding: 15px; box-shadow: none; justify-content: center; }
+        .pressure-sub-text { font-size: 0.8em; color: var(--color-text-dim); display: block; line-height: 1.2; }
+
+        /* VERTICAL BAR STYLES */
+        .vertical-bar-card { display: none; } /* Removed from HTML */
+        
+        /* MAIN LAYOUT FIXES */
+        .gauge-row, .middle-row { display: flex; gap: 20px; width: 100%; flex-wrap: nowrap; }
+
+        /* RESPONSIVE SCALING (MOBILE) */
+        @media (max-width: 600px) {
+            #weather-app { flex-direction: column; } #sidebar { width: 100%; border-radius: 0; padding: 10px 0; position: static; height: auto; }
+            #station-header h1, #info-section { display: none; }
+            #station-header { text-align: center; margin: 0 auto; }
+            nav ul { display: flex; justify-content: space-around; padding: 0 10px; overflow-x: auto; white-space: nowrap; flex-grow: 0; overflow-y: hidden; }
+            .nav-item { padding: 5px 10px; margin: 0; flex-shrink: 0; }
+            .nav-item:nth-child(4) { display: none !important; } /* Hide Windy.com on mobile */
+            .active-page { margin-right: 0; border-radius: var(--border-radius-small); }
+            #dashboard-content { padding: 15px; max-width: none; margin: 0; }
+            .gauge-row, .middle-row { flex-direction: column; } 
+            .pressure-block { flex: none; width: 100%; min-height: auto; }
+            .rainfall-stats-container { flex-direction: column; }
+            .rainfall-stats-block { flex: none; padding: 15px; } 
+            .large-gauge { flex: none; width: 100%; min-height: 260px; }
+        }
+
+        /* LIGHT MODE STYLES */
+        body.light-mode {
+            --color-dark-background: #f4f7f6; --color-card-background: #ffffff;
+            --color-text-light: #333333; --color-sidebar-background: #eeeeee;
+            --color-text-dim: #555555; --color-gauge-track: #e0e0e0;
+            background-color: var(--color-dark-background); color: var(--color-text-light);
+        }
+        body.light-mode #sidebar { background-color: var(--color-sidebar-background); box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1); }
+        body.light-mode .gauge-card { background-color: var(--color-card-background); box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); }
+        body.light-mode .gauge-text-block { color: var(--color-text-light); }
+        body.light-mode .gauge-container tspan { display: none; }
+        body.light-mode .gauge-container-360 text { fill: var(--color-text-dim); }
+        body.light-mode .pressure-sub-text { color: var(--color-text-dim); }
+        
+        /* Toggle Switch Styles */
+        #dark-mode-toggle { display: flex; justify-content: space-between; align-items: center; cursor: default; }
+        #dark-mode-toggle label { cursor: pointer; }
+        .switch-container { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .switch-container input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #555; transition: .4s; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; }
+        .slider.round { border-radius: 34px; }
+        input:checked + .slider { background-color: var(--color-accent-blue); }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        /* IFRame Graph Crop Styles (Your settings) */
+        #graph-crop-window { padding: 0; overflow: hidden; position: relative; }
+        #ecowitt-graph-iframe { width: 1200px; height: 2600px; position: relative; top: -335px; left: -000px; right: -100px; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div id="weather-app">
+        <aside id="sidebar">
+            <div id="station-header">
+                <div class="logo-container">
+                    <img src="howthw.png" alt="Howth Weather Station Logo">
+                </div>
+                <h1>Howth Weather Station</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li class="nav-item active-page"><a href="index.html">Home</a></li>
+                    <li class="nav-item"><a href="widgets.html">Widgets</a></li>
+                    <li class="nav-item"><a href="alerts.html">Weather alerts</a></li>
+                    <li class="nav-item"><a href="windy.html">Windy.com</a></li>
+                </ul>
+            </nav>
+            <div id="info-section"><p>About</p></div>
+            <div id="dark-mode-toggle">
+                <label for="theme-switch">Light mode</label>
+                <label class="switch-container">
+                    <input type="checkbox" id="theme-switch">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </aside>
+
+        <main id="dashboard-content">
+            <section class="gauge-row">
+                <div class="gauge-card large-gauge" id="outdoor-temp-card">
+                    <div class="gauge-container">
+                        <div id="gauge-temp" class="gauge-canvas"></div> 
+                    </div>
+                    <div class="gauge-text-block"> 
+                        <span class="gauge-value" id="outdoor-temp-value">--</span>
+                        <span class="gauge-unit">°C</span>
+                        <span class="gauge-range" id="outdoor-temp-range">(-10 to 40°C)</span>
+                    </div>
+                    <span class="gauge-label">OUTDOOR</span>
+                </div>
+                
+                <div class="gauge-card large-gauge" id="humidity-card">
+                    <div class="gauge-container">
+                        <div id="gauge-humidity" class="gauge-canvas"></div>
+                    </div>
+                    <div class="gauge-text-block">
+                        <span class="gauge-value" id="outdoor-humidity-value">--</span>
+                        <span class="gauge-unit">%</span>
+                        <span class="gauge-range" id="outdoor-humidity-range">(0 to 100%)</span>
+                    </div>
+                    <span class="gauge-label">OUTDOOR HUMIDITY</span>
+                </div>
+                
+                <div class="gauge-card large-gauge" id="wind-direction-card">
+                     <div class="gauge-container-360">
+                        <div id="gauge-wind-dir" class="gauge-canvas"></div>
+                         <div class="gauge-text-overlay-360">
+                            <span class="gauge-value" id="wind-dir-value">--</span>
+                            <span class="gauge-unit" id="wind-dir-deg">--°</span>
+                        </div>
+                    </div>
+                    <span class="gauge-label">WIND DIRECTION (Points in Direction Winds Blowing)
+                </div>
+                
+                <div class="gauge-card large-gauge" id="wind-speed-card">
+                    <div class="gauge-container">
+                        <div id="gauge-wind-speed" class="gauge-canvas"></div>
+                    </div>
+                    <div class="gauge-text-block">
+                        <span class="gauge-value" id="wind-speed-value">--</span>
+                        <span class="gauge-unit">km/h</span>
+                        <span class="gauge-range" id="wind-speed-range">(max 50 km/h)</span>
+                    </div>
+                    <span class="gauge-label">WIND SPEED</span>
+                </div>
+
+            </section>
+            
+            <section class="middle-row">
+                <div class="gauge-card" style="flex: 2;">
+                    <div class="rainfall-stats-container">
+                        <div class="gauge-container">
+                            <div id="gauge-rain" class="gauge-canvas"></div>
+                            <div class="gauge-text-block">
+                                <span class="gauge-value" id="rainfall-hourly-value">--</span>
+                                <span class="gauge-unit">mm/hr</span>
+                                <span class="gauge-range" id="rainfall-hourly-range">(Rate)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="rainfall-stats-block">
+                            <ul class="rainfall-stats-list">
+                                <li>**Rain Rate**: <span id="rain-rate-stat">--</span> mm/hr</li>
+                                <li>**Event Total**: <span id="rain-event-stat">--</span> mm</li>
+                                <li>**Daily Total**: <span id="rain-daily-stat">--</span> mm</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pressure-block" style="flex: 1;">
+                    <div class="gauge-card pressure-card" id="relative-pressure-card">
+                        Relative Pressure<br>
+                        <span style="font-size: 1.5em;" id="relative-pressure-value">-- hPa</span>
+                        <span class="pressure-sub-text">Sea Level Adjusted</span>
+                    </div>
+                </div>
+                
+                </section>
+            
+            <section class="graph-row">
+                <div class="gauge-card graph-area" id="graph-crop-window">
+                    <iframe 
+                        src="https://www.ecowitt.net/home/share?authorize=4MEVYD" 
+                        id="ecowitt-graph-iframe"
+                        scrolling="no"
+                        frameborder="0">
+                    </iframe>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const themeSwitch = document.getElementById('theme-switch');
+        const body = document.body;
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                body.classList.add('light-mode');
+                themeSwitch.checked = true;
+            } else {
+                body.classList.remove('light-mode');
+                themeSwitch.checked = false;
+            }
+        }
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            applyTheme(savedTheme);
+        } else {
+            applyTheme('dark');
+        }
+        themeSwitch.addEventListener('change', function() {
+            if (this.checked) {
+                body.classList.add('light-mode');
+                localStorage.setItem('theme', 'light');
+            } else {
+                body.classList.remove('light-mode');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+    </script>
+    
+    <script>
+        const DATA_SOURCE_URL = 'https://ecowit-proxy.sampatton176.workers.dev/'; 
+        
+        // --- Helper functions ---
+        function clamp(value, min, max) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return min;
+            return Math.min(Math.max(num, min), max);
+        }
+        function mapRange(value, inMin, inMax, outMin, outMax) {
+            const num = parseFloat(value);
+            if (isNaN(num)) return outMin;
+            return (num - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
+        }
+        function windDegreesToText(deg) {
+            if (deg === null || deg === undefined) return '--';
+            const val = Math.floor((deg / 22.5) + 0.5);
+            const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+            return arr[(val % 16)];
+        }
+        function safeToFixed(value, digits = 1) {
+            const num = parseFloat(value);
+            if (value === null || value === undefined || isNaN(num)) {
+                return '--';
+            }
+            return num.toFixed(digits);
+        }
+        function safeToFixedNoDecimal(value) {
+            const num = parseFloat(value);
+            if (value === null || value === undefined || isNaN(num)) {
+                return '--';
+            }
+            return num.toFixed(0);
+        }
+
+        // --- Global object to hold our gauge instances ---
+        const gauges = {};
+        let textElements = {}; // Will hold our text spans
+
+        // --- Function to create the gauges ---
+        function createGauges() {
+            const rootStyle = getComputedStyle(document.body);
+            const trackColor = rootStyle.getPropertyValue('--color-gauge-track').trim();
+            const labelColor = rootStyle.getPropertyValue('--color-text-dim').trim();
+            const red = rootStyle.getPropertyValue('--color-gauge-red').trim();
+            const yellow = rootStyle.getPropertyValue('--color-gauge-yellow').trim();
+            const green = rootStyle.getPropertyValue('--color-gauge-green').trim();
+            const blue = rootStyle.getPropertyValue('--color-gauge-blue').trim();
+
+            const commonSemiCircleOptions = {
+                gaugeWidthScale: 0.7,
+                counter: false,
+                hideMinMax: true,
+                relativeGaugeSize: true,
+                gaugeColor: trackColor,
+                levelColors: [], 
+                noGradient: true,
+                pointer: true,
+                pointerOptions: {
+                    toplength: -10, bottomlength: 10, bottomwidth: 3,
+                    color: labelColor, stroke: 'none'
+                },
+            };
+            
+            const fullCircleOptions = {
+                gaugeWidthScale: 0.3,
+                counter: false,
+                hideMinMax: true,
+                relativeGaugeSize: true,
+                gaugeColor: trackColor,
+                noGradient: true,
+                donut: true,
+                donutStartAngle: 270, // Start at the top (North)
+                pointer: true,
+                pointerOptions: {
+                    toplength: 10, bottomlength: 10, bottomwidth: 8,
+                    color: red, stroke: 'none'
+                },
+                min: 0,
+                max: 360,
+                levelColors: [trackColor]
+            };
+
+            // 1. Temperature Gauge (-10 to 40)
+            gauges.temp = new JustGage({
+                id: 'gauge-temp',
+                parent: document.getElementById('gauge-temp'),
+                ...commonSemiCircleOptions,
+                min: -10,
+                max: 40,
+                customSectors: {
+                    ranges: [
+                        { lo: -10, hi: 0, color: blue },
+                        { lo: 0, hi: 25, color: green },
+                        { lo: 25, hi: 30, color: yellow },
+                        { lo: 30, hi: 40, color: red }
+                    ]
+                }
+            });
+
+            // 2. Humidity Gauge (0 to 100)
+            gauges.humidity = new JustGage({
+                id: 'gauge-humidity',
+                parent: document.getElementById('gauge-humidity'),
+                ...commonSemiCircleOptions,
+                min: 0,
+                max: 100,
+                customSectors: {
+                    ranges: [
+                        { lo: 0, hi: 30, color: yellow },
+                        { lo: 30, hi: 60, color: green },
+                        { lo: 60, hi: 100, color: yellow }
+                    ]
+                }
+            });
+
+            // 3. Wind Direction Gauge (0 to 360)
+            gauges.windDir = new JustGage({
+                id: 'gauge-wind-dir',
+                parent: document.getElementById('gauge-wind-dir'),
+                ...fullCircleOptions,
+                min: 0,
+                max: 360,
+                levelColors: [trackColor],
+            });
+            
+            // 4. Wind Speed Gauge (0 to 50)
+            gauges.windSpeed = new JustGage({
+                id: 'gauge-wind-speed',
+                parent: document.getElementById('gauge-wind-speed'),
+                ...commonSemiCircleOptions,
+                min: 0,
+                max: 50,
+                customSectors: {
+                    ranges: [
+                        { lo: 0, hi: 20, color: green },
+                        { lo: 20, hi: 35, color: yellow },
+                        { lo: 35, hi: 50, color: red }
+                    ]
+                }
+            });
+            
+            // 5. Rain Gauge (0 to 25)
+            gauges.rain = new JustGage({
+                id: 'gauge-rain',
+                parent: document.getElementById('gauge-rain'),
+                ...commonSemiCircleOptions,
+                min: 0,
+                max: 25,
+                levelColors: [blue],
+            });
+        }
+        
+        // --- Function to fetch data ---
+        async function fetchAndUpdateData() {
+            try {
+                const response = await fetch(DATA_SOURCE_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+
+                if (!data.observations || data.observations.length === 0) {
+                    throw new Error('WU data format incorrect or observations empty');
+                }
+                
+                const liveData = data.observations[0];
+                const metrics = liveData.metric;
+
+                if (!metrics) {
+                    throw new Error('Metrics object is missing from WU data');
+                }
+                
+                // --- Find text elements ---
+                if (!textElements.temp) { 
+                    textElements = {
+                        temp: document.getElementById('outdoor-temp-value'),
+                        tempRange: document.getElementById('outdoor-temp-range'), 
+                        humidity: document.getElementById('outdoor-humidity-value'),
+                        humidityRange: document.getElementById('outdoor-humidity-range'), 
+                        
+                        windDir: document.getElementById('wind-dir-value'),
+                        windDeg: document.getElementById('wind-dir-deg'),
+                        windSpeed: document.getElementById('wind-speed-value'), 
+                        windSpeedRange: document.getElementById('wind-speed-range'), 
+                        
+                        rain: document.getElementById('rainfall-hourly-value'),
+                        rainRange: document.getElementById('rainfall-hourly-range'), 
+                        relPressure: document.getElementById('relative-pressure-value'),
+                        
+                        // Rain Stats
+                        rainRateStat: document.getElementById('rain-rate-stat'),
+                        rainEventStat: document.getElementById('rain-event-stat'),
+                        rainDailyStat: document.getElementById('rain-daily-stat'),
+                        pressureSubText: document.querySelector('.pressure-sub-text')
+                    };
+                }
+
+                // --- 1. Update Text Values ("Stats") ---
+                textElements.temp.textContent = safeToFixed(metrics.temp);
+                textElements.tempRange.textContent = '(-10 to 40°C)';
+                
+                textElements.humidity.textContent = (liveData.humidity !== null && liveData.humidity !== undefined) ? liveData.humidity : '--';
+                textElements.humidityRange.textContent = '(0 to 100%)';
+                
+                textElements.relPressure.textContent = safeToFixed(metrics.pressure) + ' hPa';
+                textElements.pressureSubText.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+                
+                textElements.windDir.textContent = windDegreesToText(liveData.winddir);
+                textElements.windDeg.textContent = safeToFixedNoDecimal(liveData.winddir) + '°';
+                textElements.windSpeed.textContent = safeToFixed(metrics.windSpeed, 0); 
+                textElements.windSpeedRange.textContent = '(max 50 km/h)';
+
+                // Rainfall (Gauge)
+                textElements.rain.textContent = safeToFixed(metrics.precipRate);
+                textElements.rainRange.textContent = '(Rate)';
+                
+                // Rainfall (Stats Block) 
+                textElements.rainRateStat.textContent = safeToFixed(metrics.precipRate);
+                textElements.rainEventStat.textContent = safeToFixed(metrics.precipTotal); 
+                textElements.rainDailyStat.textContent = safeToFixed(metrics.precipTotal); 
+                
+                // --- 2. Update Visual Gauges ("Gauge") ---
+                if (gauges.temp) gauges.temp.refresh(clamp(metrics.temp, -10, 40));
+                if (gauges.humidity) gauges.humidity.refresh(clamp(liveData.humidity, 0, 100));
+                if (gauges.rain) gauges.rain.refresh(clamp(metrics.precipRate, 0, 25));
+                if (gauges.windDir) gauges.windDir.refresh(clamp(liveData.winddir, 0, 360));
+                if (gauges.windSpeed) gauges.windSpeed.refresh(clamp(metrics.windSpeed, 0, 50));
+                
+                // Note: Vertical bar is REMOVED from HTML
+                
+            } catch (error) {
+                console.error('Error fetching or parsing weather data:', error);
+                // Set all exposed elements to X on failure
+                document.getElementById('outdoor-temp-value').textContent = 'X';
+                document.getElementById('outdoor-humidity-value').textContent = 'X';
+                document.getElementById('wind-dir-value').textContent = 'X';
+                document.getElementById('wind-dir-deg').textContent = 'X';
+                document.getElementById('wind-speed-value').textContent = 'X';
+                document.getElementById('rainfall-hourly-value').textContent = 'X';
+                document.getElementById('relative-pressure-value').textContent = 'X hPa';
+                document.getElementById('rain-rate-stat').textContent = 'X';
+                document.getElementById('rain-event-stat').textContent = 'X';
+                document.getElementById('rain-daily-stat').textContent = 'X';
+            }
+        }
+        
+        // --- 4. RUN THE SCRIPT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            createGauges(); // Create the gauges first
+            fetchAndUpdateData(); // Then fetch data
+            setInterval(fetchAndUpdateData, 60000); // Refresh every 60 seconds
+        });
+    </script>
+</body>
+</html>
