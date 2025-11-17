@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upgraded Weather Gauges - Howth Weather</title>
+    
+    <style>
+        /* BASE STYLES & THEME - MATCHING YOUR EXISTING DESIGN */
+        :root {
+            --color-dark-background: #1e1e1e; 
+            --color-card-background: #2b2b2b;
+            --color-sidebar-background: #1e1e1e;
+            --color-text-light: #ffffff;
+            --color-text-dim: #ccc;
+            --color-accent-blue: #4a90e2; 
+            --color-gauge-track: #444444; 
+            --color-gauge-red: #EA4228;
+            --color-gauge-yellow: #F5CD19;
+            --color-gauge-green: #5BE12C;
+            --color-gauge-blue: #00bcd4;
+            --sidebar-width: 300px;
+            --border-radius-large: 16px;
+            --border-radius-small: 8px;
+        }
+        
+        body { 
+            margin: 0; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--color-dark-background); 
+            color: var(--color-text-light); 
+            overflow-x: hidden; 
+        }
+        
+        #weather-app { display: flex; min-height: 100vh; }
+
+        /* SIDEBAR STYLING - EXACT MATCH */
+        #sidebar { 
+            width: var(--sidebar-width); 
+            background-color: var(--color-sidebar-background); 
+            padding: 20px 0; 
+            display: flex; 
+            flex-direction: column; 
+            border-radius: 0 var(--border-radius-large) var(--border-radius-large) 0; 
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5); 
+            z-index: 10;
+            position: sticky; 
+            top: 0; 
+            height: 100vh;
+        }
+        
+        .logo-container { 
+            width: 200px; 
+            height: 200px; 
+            margin: 0 auto 10px; 
+            border-radius: 50%; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
+        
+        #station-header img { 
+            display: block; 
+            width: 100%; 
+            max-width: 500px; 
+            height: auto; 
+            margin: 0 auto; 
+        }
+        
+        #station-header h1 { 
+            font-size: 1.4em; 
+            font-weight: 300; 
+            text-align: center; 
+            margin-bottom: 25px; 
+            color: var(--color-text-dim); 
+        }
+        
+        nav ul { 
+            list-style: none; 
+            padding: 0; 
+            width: 100%; 
+            flex-grow: 1; 
+            overflow-y: auto; 
+        }
+        
+        .nav-item { 
+            padding: 10px 20px 10px 50px; 
+            cursor: pointer; 
+            transition: background-color 0.2s; 
+            margin: 5px 0; 
+            padding-right: 20px; 
+        }
+        
+        .nav-item a, .nav-item a:visited { 
+            color: var(--color-text-dim) !important; 
+            text-decoration: none !important; 
+            display: block; 
+            font-size: 1.1em; 
+        }
+        
+        .active-page { 
+            background-color: var(--color-accent-blue); 
+            border-radius: 0 25px 25px 0; 
+            margin-right: 10px; 
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); 
+        }
+        
+        .active-page a { color: var(--color-text-light) !important; }
+        
+        #info-section { margin-top: auto; }
+        #info-section, #dark-mode-toggle { 
+            padding: 10px 20px 10px 50px; 
+            cursor: pointer; 
+            font-size: 0.9em; 
+            opacity: 0.7; 
+        }
+
+        /* MAIN DASHBOARD CONTENT - MATCHING YOUR LAYOUT */
+        #dashboard-content { 
+            flex-grow: 1; 
+            padding: 30px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            max-width: 1200px; 
+            margin: 0 auto; 
+        }
+        
+        .gauge-card { 
+            background-color: var(--color-card-background); 
+            border-radius: var(--border-radius-small); 
+            padding: 20px; 
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: flex-start;
+            align-items: center;
+            transition: transform 0.2s ease;
+        }
+        
+        .gauge-card:hover {
+            transform: translateY(-2px);
+        }
+        
+        .large-gauge { 
+            flex: 1; 
+            min-height: 280px; 
+        }
+        
+        /* UPGRADED GAUGE STYLES */
+        .gauge-container { 
+            width: 220px; 
+            height: 160px; 
+            position: relative; 
+            margin-bottom: 10px;
+        }
+        
+        .gauge-svg {
+            transform: rotate(0deg);
+            position: relative;
+        }
+
+        .gauge-arc-bg, .gauge-arc-progress {
+            fill: none;
+            stroke-width: 16;
+            stroke-linecap: round;
+        }
+
+        .gauge-arc-bg {
+            stroke: var(--color-gauge-track);
+        }
+
+        .gauge-arc-progress {
+            transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .gauge-text-block { 
+            text-align: center; 
+            width: 100%; 
+            margin-top: 10px;
+        }
+        
+        .gauge-value { 
+            font-size: 3.5em; 
+            font-weight: 700; 
+            line-height: 1em; 
+        }
+        
+        .gauge-unit, .gauge-label { 
+            font-size: 1em; 
+            font-weight: 300; 
+            opacity: 0.8; 
+            margin-top: 5px; 
+        }
+        
+        .gauge-label { 
+            color: var(--color-text-light); 
+            display: block;
+            margin-top: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9em;
+        }
+        
+        .gauge-range { 
+            display: block; 
+            font-size: 0.8em; 
+            opacity: 0.6; 
+            margin-top: 5px; 
+        }
+        
+        /* COMPASS STYLES - UPGRADED */
+        .gauge-container-360 { 
+            width: 220px; 
+            height: 220px; 
+            position: relative; 
+        }
+        
+        .compass-ring {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid var(--color-gauge-track);
+            position: relative;
+            background: radial-gradient(circle, rgba(74, 144, 226, 0.1) 0%, transparent 70%);
+        }
+
+        .compass-cardinal {
+            position: absolute;
+            font-size: 0.75em;
+            font-weight: 600;
+            color: var(--color-text-light);
+        }
+
+        .compass-cardinal.n { top: 5%; left: 50%; transform: translateX(-50%); }
+        .compass-cardinal.nne { top: 10%; right: 28%; }
+        .compass-cardinal.ne { top: 18%; right: 18%; }
+        .compass-cardinal.ene { top: 28%; right: 10%; }
+        .compass-cardinal.e { top: 50%; right: 5%; transform: translateY(-50%); }
+        .compass-cardinal.ese { bottom: 28%; right: 10%; }
+        .compass-cardinal.se { bottom: 18%; right: 18%; }
+        .compass-cardinal.sse { bottom: 10%; right: 28%; }
+        .compass-cardinal.s { bottom: 5%; left: 50%; transform: translateX(-50%); }
+        .compass-cardinal.ssw { bottom: 10%; left: 28%; }
+        .compass-cardinal.sw { bottom: 18%; left: 18%; }
+        .compass-cardinal.wsw { bottom: 28%; left: 10%; }
+        .compass-cardinal.w { top: 50%; left: 5%; transform: translateY(-50%); }
+        .compass-cardinal.wnw { top: 28%; left: 10%; }
+        .compass-cardinal.nw { top: 18%; left: 18%; }
+        .compass-cardinal.nnw { top: 10%; left: 28%; }
+
+        .compass-arrow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 90px;
+            margin-left: -3px;
+            margin-top: -45px;
+            transform-origin: center center;
+            transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .compass-arrow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-bottom: 20px solid var(--color-gauge-red);
+        }
+
+        .compass-arrow::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 65px;
+            background: linear-gradient(to bottom, var(--color-gauge-red), transparent);
+            opacity: 0.7;
+        }
+
+        .gauge-text-overlay-360 { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%); 
+            text-align: center; 
+            width: 100%; 
+        }
+        
+        .gauge-text-overlay-360 .gauge-value { 
+            font-size: 2.5em; 
+            font-weight: 700;
+        }
+        
+        .gauge-text-overlay-360 .gauge-unit {
+            font-size: 1em;
+            display: block;
+            margin-top: 5px;
+        }
+        
+        /* RAINFALL & PRESSURE STYLES - MATCHING YOUR LAYOUT */
+        .rainfall-stats-container { 
+            display: flex; 
+            flex: 2; 
+            gap: 20px; 
+            align-items: center;
+        }
+        
+        .rainfall-stats-block { 
+            flex: 1; 
+            padding: 10px 0 0 10px; 
+            text-align: left; 
+        }
+        
+        .rainfall-stats-list { 
+            list-style: none; 
+            padding: 0; 
+            font-size: 0.95em; 
+        }
+        
+        .rainfall-stats-list li { 
+            margin-bottom: 8px; 
+            opacity: 0.9; 
+        }
+
+        .pressure-block { 
+            display: flex; 
+            flex-direction: column; 
+            flex: 1; 
+            gap: 20px; 
+            min-height: 90px; 
+        }
+        
+        .pressure-card { 
+            flex: 1; 
+            min-height: 90px; 
+            font-size: 1.2em; 
+            text-align: left; 
+            padding: 15px; 
+            box-shadow: none; 
+            justify-content: center; 
+        }
+        
+        .pressure-sub-text { 
+            font-size: 0.8em; 
+            color: var(--color-text-dim); 
+            display: block; 
+            line-height: 1.2; 
+        }
+        
+        /* MAIN LAYOUT */
+        .gauge-row, .middle-row { 
+            display: flex; 
+            gap: 20px; 
+            width: 100%; 
+            flex-wrap: nowrap; 
+        }
+        
+        /* GRAPH SECTION */
+        .graph-row {
+            width: 100%;
+        }
+
+        .graph-area {
+            flex-grow: 1;
+            min-height: 300px;
+            text-align: left;
+            padding: 0;
+        }
+
+        #graph-crop-window { 
+            padding: 0; 
+            overflow: hidden; 
+            position: relative; 
+        }
+        
+        #ecowitt-graph-iframe { 
+            width: 1200px; 
+            height: 2600px; 
+            position: relative; 
+            top: -335px; 
+            left: 0; 
+            right: -100px; 
+            pointer-events: none; 
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            #weather-app { flex-direction: column; }
+            #sidebar { 
+                width: 100%; 
+                border-radius: 0; 
+                padding: 10px 0; 
+                position: static; 
+                height: auto; 
+            }
+            #station-header h1, #info-section { display: none; }
+            nav ul { 
+                display: flex; 
+                justify-content: space-around; 
+                padding: 0 10px; 
+                overflow-x: auto; 
+                flex-grow: 0; 
+            }
+            .nav-item { padding: 5px 10px; margin: 0; }
+            .gauge-row, .middle-row { flex-direction: column; }
+            .gauge-container, .gauge-container-360 {
+                width: 180px;
+                height: 180px;
+            }
+        }
+
+        /* Toggle Switch Styles */
+        #dark-mode-toggle { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            cursor: default; 
+        }
+        #dark-mode-toggle label { cursor: pointer; }
+        .switch-container { 
+            position: relative; 
+            display: inline-block; 
+            width: 50px; 
+            height: 28px; 
+        }
+        .switch-container input { opacity: 0; width: 0; height: 0; }
+        .slider { 
+            position: absolute; 
+            cursor: pointer; 
+            top: 0; left: 0; right: 0; bottom: 0; 
+            background-color: #555; 
+            transition: .4s; 
+            border-radius: 34px;
+        }
+        .slider:before { 
+            position: absolute; 
+            content: ""; 
+            height: 20px; 
+            width: 20px; 
+            left: 4px; 
+            bottom: 4px; 
+            background-color: white; 
+            transition: .4s; 
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: var(--color-accent-blue); }
+        input:checked + .slider:before { transform: translateX(22px); }
+    </style>
+</head>
+<body>
+
+    <div id="weather-app">
+        <aside id="sidebar">
+            <div id="station-header">
+                <div class="logo-container">
+                    <img src="howthw.png" alt="Howth Weather Station Logo">
+                </div>
+                <h1>Howth Weather Station</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li class="nav-item active-page"><a href="index.html">Home</a></li>
+                    <li class="nav-item"><a href="widgets.html">Widgets</a></li>
+                    <li class="nav-item"><a href="alerts.html">Weather alerts</a></li>
+                    <li class="nav-item"><a href="windy.html">Windy.com</a></li>
+                </ul>
+            </nav>
+            <div id="info-section"><p>About</p></div>
+            <div id="dark-mode-toggle">
+                <label for="theme-switch">Light mode</label>
+                <label class="switch-container">
+                    <input type="checkbox" id="theme-switch">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </aside>
+
+        <main id="dashboard-content">
+            <section class="gauge-row">
+                <!-- Temperature -->
+                <div class="gauge-card large-gauge">
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 200 200">
+                            <path class="gauge-arc-bg" 
+                                  d="M 32.322 145.048 A 75 75 0 1 1 167.678 145.048" 
+                                  stroke-width="16"/>
+                            <path class="gauge-arc-progress" id="temp-progress"
+                                  d="M 32.322 145.048 A 75 75 0 1 1 167.678 145.048" 
+                                  stroke="url(#tempGradient)"
+                                  stroke-width="16"/>
+                            <defs>
+                                <linearGradient id="tempGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#00bcd4"/>
+                                    <stop offset="50%" style="stop-color:#F5CD19"/>
+                                    <stop offset="100%" style="stop-color:#EA4228"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                            <span class="gauge-value" id="temp-value">--</span>
+                            <span class="gauge-unit">°C</span>
+                        </div>
+                    </div>
+                    <span class="gauge-label">OUTDOOR TEMPERATURE</span>
+                    <span class="gauge-range">(-10 to 40°C)</span>
+                </div>
+                
+                <!-- Humidity -->
+                <div class="gauge-card large-gauge">
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 200 200">
+                            <path class="gauge-arc-bg" 
+                                  d="M 25 100 A 75 75 0 1 1 175 100" 
+                                  stroke-width="16"/>
+                            <path class="gauge-arc-progress" id="humidity-progress"
+                                  d="M 25 100 A 75 75 0 1 1 175 100" 
+                                  stroke="url(#humidityGradient)"
+                                  stroke-width="16"/>
+                            <defs>
+                                <linearGradient id="humidityGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#F5CD19"/>
+                                    <stop offset="30%" style="stop-color:#5BE12C"/>
+                                    <stop offset="100%" style="stop-color:#00bcd4"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                            <span class="gauge-value" id="humidity-value">--</span>
+                            <span class="gauge-unit">%</span>
+                        </div>
+                    </div>
+                    <span class="gauge-label">OUTDOOR HUMIDITY</span>
+                    <span class="gauge-range">(0 to 100%)</span>
+                </div>
+                
+                <!-- Wind Direction -->
+                <div class="gauge-card large-gauge">
+                    <div class="gauge-container-360">
+                        <div class="compass-ring">
+                            <span class="compass-cardinal n">N</span>
+                            <span class="compass-cardinal nne">NNE</span>
+                            <span class="compass-cardinal ne">NE</span>
+                            <span class="compass-cardinal ene">ENE</span>
+                            <span class="compass-cardinal e">E</span>
+                            <span class="compass-cardinal ese">ESE</span>
+                            <span class="compass-cardinal se">SE</span>
+                            <span class="compass-cardinal sse">SSE</span>
+                            <span class="compass-cardinal s">S</span>
+                            <span class="compass-cardinal ssw">SSW</span>
+                            <span class="compass-cardinal sw">SW</span>
+                            <span class="compass-cardinal wsw">WSW</span>
+                            <span class="compass-cardinal w">W</span>
+                            <span class="compass-cardinal wnw">WNW</span>
+                            <span class="compass-cardinal nw">NW</span>
+                            <span class="compass-cardinal nnw">NNW</span>
+                            <div class="compass-arrow" id="wind-arrow"></div>
+                        </div>
+                        <div class="gauge-text-overlay-360">
+                            <span class="gauge-value" id="wind-dir-value">--</span>
+                            <span class="gauge-unit" id="wind-dir-deg">--°</span>
+                        </div>
+                    </div>
+                    <span class="gauge-label">WIND DIRECTION</span>
+                </div>
+                
+                <!-- Wind Speed -->
+                <div class="gauge-card large-gauge">
+                    <div class="gauge-container">
+                        <svg class="gauge-svg" viewBox="0 0 200 200">
+                            <path class="gauge-arc-bg" 
+                                  d="M 25 100 A 75 75 0 1 1 175 100" 
+                                  stroke-width="16"/>
+                            <path class="gauge-arc-progress" id="wind-speed-progress"
+                                  d="M 25 100 A 75 75 0 1 1 175 100" 
+                                  stroke="url(#windGradient)"
+                                  stroke-width="16"/>
+                            <defs>
+                                <linearGradient id="windGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#5BE12C"/>
+                                    <stop offset="60%" style="stop-color:#F5CD19"/>
+                                    <stop offset="100%" style="stop-color:#EA4228"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                            <span class="gauge-value" id="wind-speed-value">--</span>
+                            <span class="gauge-unit">km/h</span>
+                        </div>
+                    </div>
+                    <span class="gauge-label">WIND SPEED</span>
+                    <span class="gauge-range">(max 50 km/h)</span>
+                </div>
+            </section>
+            
+            <section class="middle-row">
+                <!-- Rainfall -->
+                <div class="gauge-card" style="flex: 2;">
+                    <div class="rainfall-stats-container">
+                        <div class="gauge-container">
+                            <svg class="gauge-svg" viewBox="0 0 200 200">
+                                <path class="gauge-arc-bg" 
+                                      d="M 25 100 A 75 75 0 1 1 175 100" 
+                                      stroke-width="16"/>
+                                <path class="gauge-arc-progress" id="rain-progress"
+                                      d="M 25 100 A 75 75 0 1 1 175 100" 
+                                      stroke="#00bcd4"
+                                      stroke-width="16"/>
+                            </svg>
+                            <div style="position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                                <span class="gauge-value" id="rain-value">--</span>
+                                <span class="gauge-unit">mm/h</span>
+                            </div>
+                        </div>
+                        
+                        <div class="rainfall-stats-block">
+                            <ul class="rainfall-stats-list">
+                                <li><strong>Rain Rate:</strong> <span id="rain-rate-stat">--</span> mm/hr</li>
+                                <li><strong>Event Total:</strong> <span id="rain-event-stat">--</span> mm</li>
+                                <li><strong>Daily Total:</strong> <span id="rain-daily-stat">--</span> mm</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pressure -->
+                <div class="pressure-block" style="flex: 1;">
+                    <div class="gauge-card pressure-card">
+                        Relative Pressure<br>
+                        <span style="font-size: 1.5em;" id="relative-pressure-value">-- hPa</span>
+                        <span class="pressure-sub-text">Sea Level Adjusted</span>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- Graph Section -->
+            <section class="graph-row">
+                <div class="gauge-card graph-area" id="graph-crop-window">
+                    <iframe 
+                        src="https://www.ecowitt.net/home/share?authorize=4MEVYD" 
+                        id="ecowitt-graph-iframe"
+                        scrolling="yes"
+                        frameborder="0">
+                    </iframe>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+const DATA_SOURCE_URL = 'https://ecowit-proxy.sampatton176.workers.dev/';
+
+function updateCircleGauge(id, value, min, max) {
+    const path = document.getElementById(id);
+    if (!path) return;
+    const percent = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
+    const radius = 85;
+    const circumference = 2 * Math.PI * radius;
+    const arcLength = (270 / 360) * circumference;
+    const offset = arcLength - (percent / 100) * arcLength;
+    path.style.strokeDasharray = `${arcLength} ${circumference}`;
+    path.style.strokeDashoffset = offset;
+}
+
+function windDegreesToText(deg) {
+    if (deg == null) return '--';
+    const directions = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+    return directions[Math.round(deg / 22.5) % 16];
+}
+
+// Conversion helpers
+function fToC(f) { return (f - 32) * 5 / 9; }
+function mphToKmh(mph) { return mph * 1.60934; }
+function inHgToHpa(inHg) { return inHg * 33.8639; }
+
+async function fetchAndUpdateData() {
+    try {
+        const response = await fetch(DATA_SOURCE_URL);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const data = await response.json();
+
+        const obs = data.observations[0];
+        const imp = obs.imperial;
+
+        // Temperature °C
+        const tempC = fToC(imp.temp);
+        document.getElementById('temp-value').textContent = tempC.toFixed(1);
+        updateCircleGauge('temp-progress', tempC, -10, 40);
+
+        // Humidity %
+        const humidity = obs.humidity;
+        document.getElementById('humidity-value').textContent = humidity;
+        updateCircleGauge('humidity-progress', humidity, 0, 100);
+
+        // Wind direction & speed
+        const windDir = obs.winddir;
+        const windKmh = mphToKmh(imp.windSpeed);
+        document.getElementById('wind-dir-value').textContent = windDegreesToText(windDir);
+        document.getElementById('wind-dir-deg').textContent = windDir + '°';
+        document.getElementById('wind-arrow').style.transform = `rotate(${windDir}deg)`;
+        document.getElementById('wind-speed-value').textContent = windKmh.toFixed(1);
+        updateCircleGauge('wind-speed-progress', windKmh, 0, 80); // max wind 80 km/h
+
+        // Rain mm/h
+        const rainMm = imp.precipRate * 25.4 / 60; // inHg/hr → mm/h conversion if needed, but mostly 0
+        const rainTotalMm = imp.precipTotal * 25.4; // total in mm
+        document.getElementById('rain-value').textContent = rainMm.toFixed(2);
+        document.getElementById('rain-rate-stat').textContent = rainMm.toFixed(2);
+        document.getElementById('rain-event-stat').textContent = rainTotalMm.toFixed(2);
+        document.getElementById('rain-daily-stat').textContent = rainTotalMm.toFixed(2);
+        updateCircleGauge('rain-progress', rainMm, 0, 10);
+
+        // Pressure hPa
+        const pressureHpa = inHgToHpa(imp.pressure);
+        document.getElementById('relative-pressure-value').textContent = pressureHpa.toFixed(1) + ' hPa';
+
+        console.log('✅ Weather data updated in metric');
+
+    } catch (error) {
+        console.error('❌ Error fetching weather data:', error);
+        document.getElementById('temp-value').textContent = 'X';
+        document.getElementById('humidity-value').textContent = 'X';
+        document.getElementById('wind-dir-value').textContent = 'X';
+        document.getElementById('wind-speed-value').textContent = 'X';
+        document.getElementById('rain-value').textContent = 'X';
+        document.getElementById('relative-pressure-value').textContent = 'X hPa';
+    }
+}
+
+fetchAndUpdateData();
+setInterval(fetchAndUpdateData, 60000);
+</script>
