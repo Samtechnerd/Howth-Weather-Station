@@ -256,16 +256,6 @@ input:checked + .slider:before { transform: translateX(20px); }
     color: var(--color-text-faint);
 }
 
-.battery-badge {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding-right: 10px;
-    margin-right: 4px;
-    border-right: 1px solid var(--color-border);
-}
-.battery-badge svg { width: 16px; height: 16px; }
-
 .status-dot {
     width: 9px;
     height: 9px;
@@ -371,14 +361,18 @@ input:checked + .slider:before { transform: translateX(20px); }
 .tile-rain .tile-bar-fill { background: #00bcd4; }
 
 .tile-pressure { --tile-accent: #a78bfa; --tile-accent-soft: rgba(167, 139, 250, 0.15); }
-.tile-indoor { --tile-accent: #f5cd19; --tile-accent-soft: rgba(245, 205, 25, 0.15); }
 .tile-solar { --tile-accent: #ff9900; --tile-accent-soft: rgba(255, 153, 0, 0.15); }
 .tile-moon { --tile-accent: #c7cdd6; --tile-accent-soft: rgba(199, 205, 214, 0.14); }
-.tile-battery { --tile-accent: #5be12c; --tile-accent-soft: rgba(91, 225, 44, 0.15); }
 
-/* Wind compass icon (rotating arrow) */
-.wind-compass-svg { width: 100%; height: 100%; }
-#wind-arrow-icon { transform-origin: 12px 12px; transition: transform 0.8s var(--ease); }
+/* Wind tile: compass + readout side by side */
+.wind-tile-body { display: flex; align-items: center; gap: 24px; width: 100%; margin-top: 12px; }
+.wind-compass-large { width: 100px; height: 100px; flex-shrink: 0; color: var(--tile-accent); }
+.wind-tile-info { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+.wind-needle { color: var(--tile-accent); transform-origin: 50px 50px; transition: transform 0.8s var(--ease); }
+@media (max-width: 520px) {
+    .wind-tile-body { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .wind-compass-large { width: 84px; height: 84px; align-self: center; }
+}
 
 /* Moon icon (rendered by moon.js) */
 .tile-icon.tile-moon-icon { background: none; }
@@ -402,15 +396,22 @@ input:checked + .slider:before { transform: translateX(20px); }
 /* ==========================================================================
    Widgets page
    ========================================================================== */
-#widget-grid { display: grid; grid-template-columns: 1fr; gap: 20px; width: 100%; }
-.widget-card { min-height: 400px; padding: 18px; align-items: stretch; }
+#widget-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+.widget-card { min-height: 340px; padding: 18px; align-items: stretch; }
 .widget-card h3 { margin: 0 0 12px; font-size: 1.05em; font-weight: 600; text-align: left; width: 100%; }
+#rain-viewer-widget { grid-column: 1 / -1; min-height: 620px; }
 .widget-iframe-container { overflow: hidden; border-radius: var(--radius-sm); flex-grow: 1; background: var(--color-bg); }
 .widget-iframe-container iframe { width: 100%; height: 100%; display: block; border: 0; }
+/* Met Éireann's widget has a fixed, non-responsive internal size — stretching
+   it to fill a tall flex container distorts/misscales it, so it gets a fixed
+   iframe height and is centered in its card instead of stretched. */
+.widget-iframe-container.contain-widget { display: flex; align-items: center; justify-content: center; }
+.widget-iframe-container.contain-widget iframe { height: 420px; max-height: 100%; }
 
 /* ==========================================================================
    Alerts page
    ========================================================================== */
+#alerts-container { display: flex; flex-direction: column; gap: 16px; width: 100%; }
 .alert-card {
     border-left: 5px solid var(--status-green);
     align-items: stretch;
@@ -435,6 +436,42 @@ input:checked + .slider:before { transform: translateX(20px); }
 #dashboard-content.windy-content { padding: 0; max-width: none; margin: 0; }
 #windy-map-container { flex-grow: 1; width: 100%; height: 100%; min-height: 100vh; position: relative; }
 #windy-map { position: absolute; inset: 0; width: 100%; height: 100%; border: none; }
+
+/* ==========================================================================
+   Forecast page
+   ========================================================================== */
+.forecast-hero { flex-direction: row; align-items: center; gap: 32px; padding: 32px; flex-wrap: wrap; }
+.forecast-hero-icon { width: 64px; height: 64px; flex-shrink: 0; color: var(--color-accent); }
+.forecast-hero-main { display: flex; flex-direction: column; align-items: flex-start; }
+.forecast-hero-temp { font-size: 3em; font-weight: 700; line-height: 1; margin-top: 4px; }
+.forecast-hero-desc { font-size: 1.05em; color: var(--color-text-dim); margin-top: 6px; }
+.forecast-hero-range { font-size: 0.85em; color: var(--color-text-faint); margin-top: 6px; }
+.forecast-hero-range strong { color: var(--color-text); }
+.forecast-hero-stats { display: flex; gap: 28px; margin-left: auto; flex-wrap: wrap; }
+.forecast-hero-stat .stat-label {
+    display: block; font-size: 0.72em; text-transform: uppercase;
+    letter-spacing: 0.6px; color: var(--color-text-faint);
+}
+.forecast-hero-stat .stat-value { display: block; font-size: 1.3em; font-weight: 700; margin-top: 4px; }
+
+.forecast-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; width: 100%; }
+.forecast-day-card { padding: 16px 8px; text-align: center; align-items: center; }
+.forecast-day-card.today { border-color: var(--tile-accent, var(--color-accent)); background: var(--color-accent-soft); }
+.forecast-day-name { font-size: 0.78em; font-weight: 600; color: var(--color-text-dim); text-transform: uppercase; letter-spacing: 0.4px; }
+.forecast-day-icon { width: 32px; height: 32px; margin: 10px 0; color: var(--color-accent); }
+.forecast-day-temps { font-size: 0.92em; white-space: nowrap; }
+.forecast-day-temps .hi { font-weight: 700; }
+.forecast-day-temps .lo { color: var(--color-text-faint); margin-left: 5px; }
+.forecast-day-rain { font-size: 0.7em; color: var(--color-gauge-blue); margin-top: 8px; }
+
+@media (max-width: 860px) {
+    .forecast-days { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 600px) {
+    .forecast-hero { flex-direction: column; align-items: flex-start; padding: 22px; }
+    .forecast-hero-stats { margin-left: 0; gap: 20px; }
+    .forecast-days { grid-template-columns: repeat(3, 1fr); }
+}
 
 /* ==========================================================================
    Responsive
@@ -462,8 +499,9 @@ input:checked + .slider:before { transform: translateX(20px); }
     #dashboard-content { padding: 18px; }
     .tile-grid { grid-template-columns: 1fr; }
 
+    #widget-grid { grid-template-columns: 1fr; }
+    #rain-viewer-widget { min-height: 320px; }
     .widget-card { min-height: 300px; }
     .alert-header { flex-direction: column; align-items: flex-start; }
     #windy-map-container { min-height: calc(100vh - 64px); }
-    .battery-badge { display: none; }
 }

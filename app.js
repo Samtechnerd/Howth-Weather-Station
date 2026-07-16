@@ -75,13 +75,8 @@ async function fetchAndUpdateData() {
 
         setText('relative-pressure-value', fmt(data.pressureHpa, 1));
 
-        setText('indoor-temp-value', data.indoorTempC != null ? fmt(data.indoorTempC, 1) + '°C' : '--');
-        setText('indoor-humidity-value', data.indoorHumidity != null ? data.indoorHumidity + '%' : '--');
-
         setText('solar-value', data.solarWm2 != null ? fmt(data.solarWm2, 0) + ' W/m²' : '--');
         setText('uvi-value', data.uvi != null ? data.uvi : '--');
-
-        setText('battery-value', data.consoleBatteryV != null ? fmt(data.consoleBatteryV, 2) + 'V' : '--');
 
         setLiveStatus(true);
     } catch (error) {
