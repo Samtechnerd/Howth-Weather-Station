@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Live weather dashboard for the Howth Weather Station — temperature, humidity, wind, rainfall and pressure.">
+    <meta name="description" content="Live weather dashboard for the Howth Weather Station — temperature, humidity, wind, rainfall, pressure and trends.">
     <title>H.W.S — Dashboard</title>
     <link rel="icon" href="howthw.png" type="image/png">
     <script>
@@ -72,6 +72,10 @@
             <div class="page-header">
                 <h2>Live Dashboard</h2>
                 <div class="live-status">
+                    <span class="battery-badge" title="Console battery voltage">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="18" height="10" rx="2"/><line x1="22" y1="10" x2="22" y2="14"/></svg>
+                        <span id="battery-value">--</span>
+                    </span>
                     <span class="status-dot" id="status-dot"></span>
                     <span id="status-label">Connecting…</span>
                 </div>
@@ -104,6 +108,7 @@
                     </div>
                     <span class="gauge-label">Outdoor temperature</span>
                     <span class="gauge-range">(-10 to 40°C)</span>
+                    <span class="gauge-substat">Dew point: <span id="dew-point-value">--</span></span>
                 </div>
 
                 <!-- Humidity -->
@@ -190,6 +195,7 @@
                     </div>
                     <span class="gauge-label">Wind speed</span>
                     <span class="gauge-range">(max 80 km/h)</span>
+                    <span class="gauge-substat">Gust: <span id="wind-gust-value">--</span></span>
                 </div>
             </section>
 
@@ -218,6 +224,9 @@
                                 <li><strong>Rain rate:</strong> <span id="rain-rate-stat">--</span> mm/hr</li>
                                 <li><strong>Event total:</strong> <span id="rain-event-stat">--</span> mm</li>
                                 <li><strong>Daily total:</strong> <span id="rain-daily-stat">--</span> mm</li>
+                                <li><strong>Weekly total:</strong> <span id="rain-weekly-stat">--</span> mm</li>
+                                <li><strong>Monthly total:</strong> <span id="rain-monthly-stat">--</span> mm</li>
+                                <li><strong>Yearly total:</strong> <span id="rain-yearly-stat">--</span> mm</li>
                             </ul>
                         </div>
                     </div>
@@ -233,16 +242,49 @@
                 </div>
             </section>
 
-            <!-- Graph Section -->
-            <section class="graph-row">
-                <div class="gauge-card graph-area" id="graph-crop-window">
-                    <iframe
-                        src="https://www.ecowitt.net/home/share?authorize=4MEVYD"
-                        id="ecowitt-graph-iframe"
-                        title="Ecowitt weather station history graphs"
-                        scrolling="yes"
-                        frameborder="0">
-                    </iframe>
+            <section class="stat-row">
+                <!-- Indoor climate -->
+                <div class="gauge-card pressure-card">
+                    <span class="pressure-label">Indoor climate</span>
+                    <span style="font-size: 1.4em; font-weight: 600;">
+                        <span id="indoor-temp-value">--</span> · <span id="indoor-humidity-value">--</span>
+                    </span>
+                    <span class="pressure-sub-text">Console temperature &amp; humidity</span>
+                </div>
+
+                <!-- Solar & UV -->
+                <div class="gauge-card pressure-card">
+                    <span class="pressure-label">Solar &amp; UV</span>
+                    <span style="font-size: 1.4em; font-weight: 600;">
+                        <span id="solar-value">--</span> · UVI <span id="uvi-value">--</span>
+                    </span>
+                    <span class="pressure-sub-text">Solar radiation &amp; UV index</span>
+                </div>
+            </section>
+
+            <!-- Trends -->
+            <section class="trends-section">
+                <div class="trends-header">
+                    <h3>Trends</h3>
+                    <a href="https://www.ecowitt.net/home/share?authorize=4MEVYD" target="_blank" rel="noopener" class="trends-link">Full history on Ecowitt →</a>
+                </div>
+                <div class="chart-grid">
+                    <div class="gauge-card chart-card">
+                        <h4>Temperature — last 24h</h4>
+                        <div class="chart-canvas-wrap"><canvas id="temp-trend-chart"></canvas></div>
+                    </div>
+                    <div class="gauge-card chart-card">
+                        <h4>Wind speed — last 24h</h4>
+                        <div class="chart-canvas-wrap"><canvas id="wind-trend-chart"></canvas></div>
+                    </div>
+                    <div class="gauge-card chart-card">
+                        <h4>Pressure — last 24h</h4>
+                        <div class="chart-canvas-wrap"><canvas id="pressure-trend-chart"></canvas></div>
+                    </div>
+                    <div class="gauge-card chart-card">
+                        <h4>Rainfall — last 7 days</h4>
+                        <div class="chart-canvas-wrap"><canvas id="rain-trend-chart"></canvas></div>
+                    </div>
                 </div>
             </section>
         </main>
@@ -250,5 +292,7 @@
 
     <script src="theme.js" defer></script>
     <script src="app.js" defer></script>
+    <script src="vendor/chart.umd.min.js" defer></script>
+    <script src="charts.js" defer></script>
 </body>
 </html>
