@@ -1,19 +1,20 @@
-// Live data feed + gauge rendering for index.html
+// Live data feed + tile rendering for index.html
 // Fetches directly from the station's own Ecowitt Cloud API via a Cloudflare
 // Worker proxy (see cloudflare-worker/), which already normalizes everything
 // to metric — no unit conversion needed here.
 const DATA_SOURCE_URL = 'https://ecowitt-live-proxy.sampatton176.workers.dev/';
-const GAUGE_ARC_RADIUS = 75; // matches the SVG arc paths in index.html
 
-function updateCircleGauge(id, value, min, max) {
-    const path = document.getElementById(id);
-    if (!path) return;
+function updateBar(fillId, value, min, max) {
+    const fill = document.getElementById(fillId);
+    if (!fill || value == null) return;
     const percent = Math.max(0, Math.min(100, ((value - min) / (max - min)) * 100));
-    const circumference = 2 * Math.PI * GAUGE_ARC_RADIUS;
-    const arcLength = (270 / 360) * circumference;
-    const offset = arcLength - (percent / 100) * arcLength;
-    path.style.strokeDasharray = `${arcLength} ${circumference}`;
-    path.style.strokeDashoffset = offset;
+    fill.style.width = percent + '%';
+    // Keep the gradient sized to the track's full width so colors stay
+    // correct at the current fill position, whatever that width happens
+    // to be (responsive layout) — rather than stretching to the fill's
+    // own (smaller) width, which would compress/misalign the gradient.
+    const trackWidth = fill.parentElement.clientWidth;
+    if (trackWidth > 0) fill.style.backgroundSize = `${trackWidth}px 100%`;
 }
 
 function windDegreesToText(deg) {
@@ -49,32 +50,30 @@ async function fetchAndUpdateData() {
         if (data.error) throw new Error(data.error);
 
         setText('temp-value', fmt(data.tempC, 1));
-        if (data.tempC != null) updateCircleGauge('temp-progress', data.tempC, -10, 40);
+        updateBar('temp-fill', data.tempC, -10, 40);
         setText('dew-point-value', data.dewPointC != null ? fmt(data.dewPointC, 1) + '°C' : '--');
 
         setText('humidity-value', data.humidity != null ? data.humidity : 'X');
-        if (data.humidity != null) updateCircleGauge('humidity-progress', data.humidity, 0, 100);
+        updateBar('humidity-fill', data.humidity, 0, 100);
 
         setText('wind-dir-value', windDegreesToText(data.windDirDeg));
         setText('wind-dir-deg', data.windDirDeg != null ? data.windDirDeg + '°' : '--°');
-        const arrow = document.getElementById('wind-arrow');
+        const arrow = document.getElementById('wind-arrow-icon');
         if (arrow && data.windDirDeg != null) arrow.style.transform = `rotate(${data.windDirDeg}deg)`;
 
         setText('wind-speed-value', fmt(data.windSpeedKmh, 1));
-        if (data.windSpeedKmh != null) updateCircleGauge('wind-speed-progress', data.windSpeedKmh, 0, 80);
+        updateBar('wind-fill', data.windSpeedKmh, 0, 80);
         setText('wind-gust-value', data.windGustKmh != null ? fmt(data.windGustKmh, 1) + ' km/h' : '--');
 
-        const rainRate = fmt(data.rainRateMm, 2);
-        setText('rain-value', rainRate);
-        setText('rain-rate-stat', rainRate);
-        setText('rain-event-stat', fmt(data.rainEventMm, 2));
-        setText('rain-daily-stat', fmt(data.rainDailyMm, 2));
+        setText('rain-value', fmt(data.rainRateMm, 2));
+        updateBar('rain-fill', data.rainRateMm, 0, 10);
+        setText('rain-event-stat', fmt(data.rainEventMm, 1));
+        setText('rain-daily-stat', fmt(data.rainDailyMm, 1));
         setText('rain-weekly-stat', fmt(data.rainWeeklyMm, 1));
         setText('rain-monthly-stat', fmt(data.rainMonthlyMm, 1));
         setText('rain-yearly-stat', fmt(data.rainYearlyMm, 0));
-        if (data.rainRateMm != null) updateCircleGauge('rain-progress', data.rainRateMm, 0, 10);
 
-        setText('relative-pressure-value', data.pressureHpa != null ? fmt(data.pressureHpa, 1) + ' hPa' : 'X hPa');
+        setText('relative-pressure-value', fmt(data.pressureHpa, 1));
 
         setText('indoor-temp-value', data.indoorTempC != null ? fmt(data.indoorTempC, 1) + '°C' : '--');
         setText('indoor-humidity-value', data.indoorHumidity != null ? data.indoorHumidity + '%' : '--');
@@ -92,7 +91,7 @@ async function fetchAndUpdateData() {
         setText('wind-dir-value', 'X');
         setText('wind-speed-value', 'X');
         setText('rain-value', 'X');
-        setText('relative-pressure-value', 'X hPa');
+        setText('relative-pressure-value', 'X');
         setLiveStatus(false);
     }
 }
