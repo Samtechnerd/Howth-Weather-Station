@@ -6,6 +6,13 @@
     <meta name="description" content="Live weather dashboard for the Howth Weather Station — temperature, humidity, wind, rainfall, pressure and trends.">
     <title>H.W.S — Dashboard</title>
     <link rel="icon" href="howthw.png" type="image/png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#14161a">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HWS">
     <script>
         (function () {
             try { document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark'); }
@@ -226,6 +233,7 @@
     </div>
 
     <script src="theme.js" defer></script>
+    <script src="pwa.js" defer></script>
     <script src="app.js" defer></script>
     <script src="moon.js" defer></script>
     <script src="vendor/chart.umd.min.js" defer></script>

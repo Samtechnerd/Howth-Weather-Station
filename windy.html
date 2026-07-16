@@ -6,6 +6,13 @@
     <meta name="description" content="Interactive Windy.com rain and wind map centred on Howth, Co. Dublin.">
     <title>H.W.S — Windy.com Map</title>
     <link rel="icon" href="howthw.png" type="image/png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#14161a">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HWS">
     <script>
         (function () {
             try { document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark'); }
@@ -88,5 +95,6 @@
     </div>
 
     <script src="theme.js" defer></script>
+    <script src="pwa.js" defer></script>
 </body>
 </html>
