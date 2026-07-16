@@ -13,10 +13,16 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="HWS">
+    <meta name="color-scheme" content="light dark">
     <script>
         (function () {
-            try { document.documentElement.setAttribute('data-theme', localStorage.getItem('theme') || 'dark'); }
-            catch (e) {}
+            try {
+                var pref = localStorage.getItem('themePreference') || localStorage.getItem('theme') || 'system';
+                var resolved = (pref === 'light' || pref === 'dark')
+                    ? pref
+                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', resolved);
+            } catch (e) {}
         })();
     </script>
     <link rel="stylesheet" href="styles.css">
@@ -64,6 +70,12 @@
                             <span class="nav-label">Windy.com</span>
                         </a>
                     </li>
+                    <li class="nav-item settings-trigger-item">
+                        <button type="button" class="nav-settings-btn" id="settings-trigger" aria-label="Settings" aria-haspopup="dialog">
+                            <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                            <span class="nav-label">Settings</span>
+                        </button>
+                    </li>
                 </ul>
             </nav>
             <div id="info-section">
@@ -110,7 +122,35 @@
         </main>
     </div>
 
+    <!-- Mobile settings sheet -->
+    <div class="settings-overlay" id="settings-overlay" hidden>
+        <div class="settings-sheet" role="dialog" aria-modal="true" aria-label="Settings">
+            <div class="settings-sheet-handle"></div>
+            <h3>Settings</h3>
+            <div class="settings-section">
+                <span class="settings-label">Appearance</span>
+                <div class="segmented-control" id="theme-segmented">
+                    <button type="button" data-theme-option="system">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
+                        Auto
+                    </button>
+                    <button type="button" data-theme-option="light">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="6.34" y2="6.34"/><line x1="17.66" y1="17.66" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="6.34" y2="17.66"/><line x1="17.66" y1="6.34" x2="19.07" y2="4.93"/></svg>
+                        Light
+                    </button>
+                    <button type="button" data-theme-option="dark">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                        Dark
+                    </button>
+                </div>
+            </div>
+            <a href="https://github.com/samtechnerd/howth-weather-station" target="_blank" rel="noopener" class="settings-about-link">About this app &rarr;</a>
+            <button type="button" class="settings-close" id="settings-close">Close</button>
+        </div>
+    </div>
+
     <script src="theme.js" defer></script>
+    <script src="settings.js" defer></script>
     <script src="pwa.js" defer></script>
 </body>
 </html>
