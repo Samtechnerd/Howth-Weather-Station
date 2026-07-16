@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Current Met Éireann weather warnings relevant to Howth, Co. Dublin.">
-    <title>H.W.S — Alerts</title>
+    <meta name="description" content="7-day weather forecast for Howth, Co. Dublin.">
+    <title>H.W.S — Forecast</title>
     <link rel="icon" href="howthw.png" type="image/png">
     <script>
         (function () {
@@ -33,7 +33,7 @@
                             <span class="nav-label">Home</span>
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item active-page">
                         <a href="forecast.html">
                             <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
                             <span class="nav-label">Forecast</span>
@@ -45,7 +45,7 @@
                             <span class="nav-label">Widgets</span>
                         </a>
                     </li>
-                    <li class="nav-item active-page">
+                    <li class="nav-item">
                         <a href="alerts.html">
                             <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 1 21h22L12 2z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
                             <span class="nav-label">Weather alerts</span>
@@ -76,13 +76,57 @@
 
         <main id="dashboard-content">
             <div class="page-header">
-                <h2>Current Weather Warnings</h2>
+                <h2>7-Day Forecast</h2>
+                <div class="live-status">
+                    <span id="forecast-updated">Loading…</span>
+                </div>
             </div>
-            <section id="alerts-container"><p class="alert-loading">Loading alerts…</p></section>
+
+            <!-- Today hero -->
+            <section class="gauge-card forecast-hero" id="forecast-hero">
+                <div class="forecast-hero-icon" id="forecast-hero-icon"></div>
+                <div class="forecast-hero-main">
+                    <span class="tile-label">Today</span>
+                    <div class="forecast-hero-temp"><span id="forecast-hero-temp">--</span>°C</div>
+                    <span class="forecast-hero-desc" id="forecast-hero-desc">--</span>
+                    <span class="forecast-hero-range">H:<strong id="forecast-hero-high">--</strong>° L:<strong id="forecast-hero-low">--</strong>°</span>
+                </div>
+                <div class="forecast-hero-stats">
+                    <div class="forecast-hero-stat">
+                        <span class="stat-label">Rain chance</span>
+                        <span class="stat-value" id="forecast-hero-rain">--</span>
+                    </div>
+                    <div class="forecast-hero-stat">
+                        <span class="stat-label">Wind</span>
+                        <span class="stat-value" id="forecast-hero-wind">--</span>
+                    </div>
+                    <div class="forecast-hero-stat">
+                        <span class="stat-label">UV Index</span>
+                        <span class="stat-value" id="forecast-hero-uv">--</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7-day outlook -->
+            <section class="forecast-days" id="forecast-days">
+                <p class="alert-loading">Loading forecast…</p>
+            </section>
+
+            <!-- Hourly trend -->
+            <section class="trends-section">
+                <div class="trends-header">
+                    <h3>Next 48 Hours</h3>
+                </div>
+                <div class="gauge-card chart-card">
+                    <h4>Temperature &amp; rain chance</h4>
+                    <div class="chart-canvas-wrap"><canvas id="hourly-trend-chart"></canvas></div>
+                </div>
+            </section>
         </main>
     </div>
 
     <script src="theme.js" defer></script>
-    <script src="alerts.js" defer></script>
+    <script src="vendor/chart.umd.min.js" defer></script>
+    <script src="forecast.js" defer></script>
 </body>
 </html>
