@@ -301,6 +301,16 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 .tile-grid.secondary { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 
+/* Rainfall + Moon Phase share a row and stretch to fill its full width,
+   rather than sitting in the auto-fit grid where leftover columns at wide
+   viewports leave dead space next to them. */
+.tile-row-split { display: flex; gap: 20px; width: 100%; }
+.tile-row-split .tile-rain { flex: 3; }
+.tile-row-split .tile-moon { flex: 2; }
+@media (max-width: 640px) {
+    .tile-row-split { flex-direction: column; }
+}
+
 .weather-tile {
     align-items: flex-start;
     text-align: left;
