@@ -37,6 +37,10 @@ function setText(id, text) {
     if (el) el.textContent = text;
 }
 
+function fmt(value, digits) {
+    return value != null ? value.toFixed(digits) : 'X';
+}
+
 async function fetchAndUpdateData() {
     try {
         const response = await fetch(DATA_SOURCE_URL);
@@ -44,8 +48,9 @@ async function fetchAndUpdateData() {
         const data = await response.json();
         if (data.error) throw new Error(data.error);
 
-        setText('temp-value', data.tempC != null ? data.tempC.toFixed(1) : 'X');
+        setText('temp-value', fmt(data.tempC, 1));
         if (data.tempC != null) updateCircleGauge('temp-progress', data.tempC, -10, 40);
+        setText('dew-point-value', data.dewPointC != null ? fmt(data.dewPointC, 1) + '°C' : '--');
 
         setText('humidity-value', data.humidity != null ? data.humidity : 'X');
         if (data.humidity != null) updateCircleGauge('humidity-progress', data.humidity, 0, 100);
@@ -55,17 +60,29 @@ async function fetchAndUpdateData() {
         const arrow = document.getElementById('wind-arrow');
         if (arrow && data.windDirDeg != null) arrow.style.transform = `rotate(${data.windDirDeg}deg)`;
 
-        setText('wind-speed-value', data.windSpeedKmh != null ? data.windSpeedKmh.toFixed(1) : 'X');
+        setText('wind-speed-value', fmt(data.windSpeedKmh, 1));
         if (data.windSpeedKmh != null) updateCircleGauge('wind-speed-progress', data.windSpeedKmh, 0, 80);
+        setText('wind-gust-value', data.windGustKmh != null ? fmt(data.windGustKmh, 1) + ' km/h' : '--');
 
-        const rainRate = data.rainRateMm != null ? data.rainRateMm.toFixed(2) : 'X';
+        const rainRate = fmt(data.rainRateMm, 2);
         setText('rain-value', rainRate);
         setText('rain-rate-stat', rainRate);
-        setText('rain-event-stat', data.rainEventMm != null ? data.rainEventMm.toFixed(2) : 'X');
-        setText('rain-daily-stat', data.rainDailyMm != null ? data.rainDailyMm.toFixed(2) : 'X');
+        setText('rain-event-stat', fmt(data.rainEventMm, 2));
+        setText('rain-daily-stat', fmt(data.rainDailyMm, 2));
+        setText('rain-weekly-stat', fmt(data.rainWeeklyMm, 1));
+        setText('rain-monthly-stat', fmt(data.rainMonthlyMm, 1));
+        setText('rain-yearly-stat', fmt(data.rainYearlyMm, 0));
         if (data.rainRateMm != null) updateCircleGauge('rain-progress', data.rainRateMm, 0, 10);
 
-        setText('relative-pressure-value', data.pressureHpa != null ? data.pressureHpa.toFixed(1) + ' hPa' : 'X hPa');
+        setText('relative-pressure-value', data.pressureHpa != null ? fmt(data.pressureHpa, 1) + ' hPa' : 'X hPa');
+
+        setText('indoor-temp-value', data.indoorTempC != null ? fmt(data.indoorTempC, 1) + '°C' : '--');
+        setText('indoor-humidity-value', data.indoorHumidity != null ? data.indoorHumidity + '%' : '--');
+
+        setText('solar-value', data.solarWm2 != null ? fmt(data.solarWm2, 0) + ' W/m²' : '--');
+        setText('uvi-value', data.uvi != null ? data.uvi : '--');
+
+        setText('battery-value', data.consoleBatteryV != null ? fmt(data.consoleBatteryV, 2) + 'V' : '--');
 
         setLiveStatus(true);
     } catch (error) {
