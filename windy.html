@@ -22,6 +22,8 @@
                     ? pref
                     : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                 document.documentElement.setAttribute('data-theme', resolved);
+                var accent = localStorage.getItem('accentColor');
+                if (accent) document.documentElement.setAttribute('data-accent', accent);
             } catch (e) {}
         })();
     </script>
@@ -61,7 +63,7 @@
                     <li class="nav-item">
                         <a href="alerts.html">
                             <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 1 21h22L12 2z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
-                            <span class="nav-label">Weather alerts</span>
+                            <span class="nav-label">Alerts</span>
                         </a>
                     </li>
                     <li class="nav-item active-page">
@@ -126,6 +128,17 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
                         Dark
                     </button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <span class="settings-label">Accent Color</span>
+                <div class="accent-swatches" id="accent-swatches">
+                    <button type="button" class="accent-swatch" data-accent="blue" style="--swatch-color:#4a90e2" aria-label="Blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+                    <button type="button" class="accent-swatch" data-accent="red" style="--swatch-color:#ef4444" aria-label="Red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+                    <button type="button" class="accent-swatch" data-accent="orange" style="--swatch-color:#f97316" aria-label="Orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+                    <button type="button" class="accent-swatch" data-accent="green" style="--swatch-color:#22c55e" aria-label="Green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+                    <button type="button" class="accent-swatch" data-accent="purple" style="--swatch-color:#a855f7" aria-label="Purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+                    <button type="button" class="accent-swatch" data-accent="pink" style="--swatch-color:#ec4899" aria-label="Pink"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
                 </div>
             </div>
             <a href="https://github.com/samtechnerd/howth-weather-station" target="_blank" rel="noopener" class="settings-about-link">About this app &rarr;</a>

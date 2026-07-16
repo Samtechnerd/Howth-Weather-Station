@@ -71,6 +71,16 @@
     --color-glass-sheen: rgba(255, 255, 255, 0.5);
 }
 
+/* ---- Accent color options ----
+   Blue is the default (--color-accent set in :root above); these override
+   it when a custom accent is picked from the settings sheet. Swatch hexes
+   below (in .accent-swatch[data-accent]) must match these. */
+:root[data-accent="red"]    { --color-accent: #ef4444; --color-accent-soft: rgba(239, 68, 68, 0.16); }
+:root[data-accent="orange"] { --color-accent: #f97316; --color-accent-soft: rgba(249, 115, 22, 0.16); }
+:root[data-accent="green"]  { --color-accent: #22c55e; --color-accent-soft: rgba(34, 197, 94, 0.16); }
+:root[data-accent="purple"] { --color-accent: #a855f7; --color-accent-soft: rgba(168, 85, 247, 0.16); }
+:root[data-accent="pink"]   { --color-accent: #ec4899; --color-accent-soft: rgba(236, 72, 153, 0.16); }
+
 /* ---- Reset & base ---- */
 * { box-sizing: border-box; }
 
@@ -291,6 +301,29 @@ input:checked + .slider:before { transform: translateX(20px); }
     background: var(--color-card); color: var(--color-accent);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
+
+.accent-swatches { display: flex; gap: 12px; flex-wrap: wrap; }
+.accent-swatch {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: none; padding: 0; cursor: pointer;
+    background: var(--swatch-color);
+    position: relative;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1);
+    transition: transform 0.15s var(--ease);
+}
+.accent-swatch:active { transform: scale(0.92); }
+.accent-swatch.active::after {
+    content: '';
+    position: absolute; inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--swatch-color);
+}
+.accent-swatch svg {
+    width: 16px; height: 16px; color: #fff;
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    opacity: 0; transition: opacity 0.15s var(--ease);
+}
+.accent-swatch.active svg { opacity: 1; }
 
 .settings-about-link {
     display: block; padding: 12px 0; font-size: 0.9em;
@@ -578,20 +611,25 @@ input:checked + .slider:before { transform: translateX(20px); }
 @media (max-width: 600px) {
     #weather-app { flex-direction: column; }
 
-    /* Bottom tab bar: fixed, frosted "liquid glass" surface anchored to the
-       iPhone safe area, floating above content rather than sitting inline
-       at the top like the desktop sidebar. */
+    /* Bottom tab bar: fixed, frosted "liquid glass" surface, floating a
+       little clear of the screen edge (and the iPhone safe area) rather
+       than fused flush to the bottom or top of the viewport. */
     #sidebar {
-        width: 100%; position: fixed; left: 0; right: 0; bottom: 0; top: auto;
+        width: auto;
+        position: fixed;
+        left: 12px; right: 12px;
+        bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+        top: auto;
         height: auto;
-        border-right: none;
-        border-top: 1px solid var(--color-glass-border);
+        border: 1px solid var(--color-glass-border);
+        border-radius: 26px;
         background: var(--color-glass);
         backdrop-filter: blur(24px) saturate(180%);
         -webkit-backdrop-filter: blur(24px) saturate(180%);
-        box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.18);
-        padding: 6px 0 calc(4px + env(safe-area-inset-bottom, 0px));
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
+        padding: 6px 0;
         z-index: 100;
+        overflow: hidden;
     }
     /* Specular sheen along the top edge — the glassy highlight */
     #sidebar::before {
@@ -602,22 +640,22 @@ input:checked + .slider:before { transform: translateX(20px); }
     #station-header, .station-subtitle, #info-section, #dark-mode-toggle { display: none; }
 
     nav ul {
-        display: flex; justify-content: space-around; padding: 0 4px;
+        display: flex; justify-content: space-between; padding: 0 2px;
         overflow-x: auto; flex-grow: 0;
     }
     .nav-item { margin: 0; flex-shrink: 0; border-radius: 0; }
     .nav-item a, .nav-item .nav-settings-btn {
-        flex-direction: column; gap: 3px; padding: 6px 10px 4px;
-        font-size: 0.66em; border-radius: 12px;
+        flex-direction: column; gap: 2px; padding: 6px 4px 4px;
+        font-size: 0.6em; border-radius: 12px; white-space: nowrap;
     }
-    .nav-icon { width: 21px; height: 21px; }
+    .nav-icon { width: 20px; height: 20px; }
     .active-page a {
         background: none; box-shadow: none; color: var(--color-accent) !important;
     }
     .settings-trigger-item { display: block; }
 
-    /* Room for the fixed bottom bar so content isn't hidden behind it */
-    #dashboard-content { padding: 18px; padding-bottom: calc(90px + env(safe-area-inset-bottom, 0px)); }
+    /* Room for the fixed, floating bottom bar so content isn't hidden behind it */
+    #dashboard-content { padding: 18px; padding-bottom: calc(86px + env(safe-area-inset-bottom, 0px)); }
     .tile-grid { grid-template-columns: 1fr; }
 
     #widget-grid { grid-template-columns: 1fr; }
@@ -628,5 +666,5 @@ input:checked + .slider:before { transform: translateX(20px); }
        sits flush with the padding-box edge regardless of padding — so the
        bottom bar's clearance has to come from shrinking the container's
        height, not padding it. */
-    #windy-map-container { min-height: calc(100vh - 74px - env(safe-area-inset-bottom, 0px)); }
+    #windy-map-container { min-height: calc(100vh - 86px - env(safe-area-inset-bottom, 0px)); }
 }

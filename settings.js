@@ -1,6 +1,10 @@
-// Mobile settings sheet — appearance (System/Light/Dark) and the About link.
-// Relies on window.HWSTheme, exposed by theme.js, for the actual theme state.
+// Mobile settings sheet — appearance (System/Light/Dark), accent color, and
+// the About link. Relies on window.HWSTheme, exposed by theme.js, for the
+// actual theme state.
 (function () {
+    var ACCENT_STORAGE_KEY = 'accentColor';
+    var DEFAULT_ACCENT = 'blue';
+
     function openSheet(overlay) {
         overlay.hidden = false;
         requestAnimationFrame(function () { overlay.classList.add('open'); });
@@ -16,6 +20,25 @@
     function syncSegmented(pref) {
         document.querySelectorAll('#theme-segmented button').forEach(function (btn) {
             btn.classList.toggle('active', btn.dataset.themeOption === pref);
+        });
+    }
+
+    function getAccent() {
+        try { return localStorage.getItem(ACCENT_STORAGE_KEY) || DEFAULT_ACCENT; } catch (e) { return DEFAULT_ACCENT; }
+    }
+
+    function setAccent(accent) {
+        try { localStorage.setItem(ACCENT_STORAGE_KEY, accent); } catch (e) {}
+        if (accent === DEFAULT_ACCENT) {
+            document.documentElement.removeAttribute('data-accent');
+        } else {
+            document.documentElement.setAttribute('data-accent', accent);
+        }
+    }
+
+    function syncSwatches(accent) {
+        document.querySelectorAll('.accent-swatch').forEach(function (btn) {
+            btn.classList.toggle('active', btn.dataset.accent === accent);
         });
     }
 
@@ -38,8 +61,16 @@
                 syncSegmented(pref);
             });
         });
-
         syncSegmented(window.HWSTheme.get());
+
+        document.querySelectorAll('.accent-swatch').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var accent = btn.dataset.accent;
+                setAccent(accent);
+                syncSwatches(accent);
+            });
+        });
+        syncSwatches(getAccent());
     }
 
     if (document.readyState === 'loading') {
