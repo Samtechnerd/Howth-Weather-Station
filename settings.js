@@ -7,7 +7,16 @@
 
     function openSheet(overlay) {
         overlay.hidden = false;
-        requestAnimationFrame(function () { overlay.classList.add('open'); });
+        requestAnimationFrame(function () {
+            overlay.classList.add('open');
+            // The sheet (and its glass lens) is hidden/zero-sized until now,
+            // so the very first positioning has to skip the spring transition —
+            // otherwise it visibly grows from a point every time you open Settings.
+            var lens = document.getElementById('segmented-glass');
+            if (lens) lens.classList.add('no-anim');
+            moveGlassLens();
+            if (lens) requestAnimationFrame(function () { lens.classList.remove('no-anim'); });
+        });
         document.body.style.overflow = 'hidden';
     }
 
@@ -21,6 +30,19 @@
         document.querySelectorAll('#theme-segmented button').forEach(function (btn) {
             btn.classList.toggle('active', btn.dataset.themeOption === pref);
         });
+        moveGlassLens();
+    }
+
+    // iOS-only: slide the frosted-glass lens under whichever segmented-control
+    // button is active. `<html class="is-ios">` is set synchronously in the
+    // inline head script, so this is a no-op (and cheap) everywhere else.
+    function moveGlassLens() {
+        if (!document.documentElement.classList.contains('is-ios')) return;
+        var lens = document.getElementById('segmented-glass');
+        var active = document.querySelector('#theme-segmented button.active');
+        if (!lens || !active) return;
+        lens.style.width = active.offsetWidth + 'px';
+        lens.style.transform = 'translateX(' + active.offsetLeft + 'px)';
     }
 
     function getAccent() {
