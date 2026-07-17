@@ -24,6 +24,14 @@
                 document.documentElement.setAttribute('data-theme', resolved);
                 var accent = localStorage.getItem('accentColor');
                 if (accent) document.documentElement.setAttribute('data-accent', accent);
+
+                // iOS-only "Liquid Glass" segmented control lens. Detected here,
+                // synchronously, so the class is present before first paint —
+                // no flash of the wrong control style.
+                var ua = navigator.userAgent || '';
+                var isIOS = /iPad|iPhone|iPod/.test(ua)
+                    || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                if (isIOS) document.documentElement.classList.add('is-ios');
             } catch (e) {}
         })();
     </script>
@@ -116,6 +124,7 @@
             <div class="settings-section">
                 <span class="settings-label">Appearance</span>
                 <div class="segmented-control" id="theme-segmented">
+                    <div class="segmented-glass" id="segmented-glass"></div>
                     <button type="button" data-theme-option="system">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
                         Auto

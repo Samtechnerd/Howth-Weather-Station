@@ -285,7 +285,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 }
 
 .segmented-control {
-    display: flex; gap: 4px;
+    display: flex; gap: 4px; position: relative;
     background: var(--color-bg); border-radius: 12px; padding: 4px;
 }
 .segmented-control button {
@@ -293,13 +293,38 @@ input:checked + .slider:before { transform: translateX(20px); }
     padding: 10px 6px; border: none; border-radius: 9px;
     background: none; color: var(--color-text-dim);
     font-family: inherit; font-size: 0.78em; font-weight: 500;
-    cursor: pointer;
+    cursor: pointer; position: relative; z-index: 1;
     transition: background-color 0.2s var(--ease), color 0.2s var(--ease);
 }
 .segmented-control button svg { width: 18px; height: 18px; }
 .segmented-control button.active {
     background: var(--color-card); color: var(--color-accent);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* iOS-only: a genuine "Liquid Glass" selection lens that slides and springs
+   between options, instead of the plain background-swap above. Detected via
+   JS (see settings.js) rather than a media query, since there's no reliable
+   CSS-only way to target "real iOS Safari" specifically. */
+.segmented-glass {
+    display: none;
+    position: absolute; top: 4px; bottom: 4px; left: 4px; width: 0;
+    border-radius: 9px;
+    background: var(--color-glass);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid var(--color-glass-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18), inset 0 1px 0 var(--color-glass-sheen);
+    pointer-events: none;
+    z-index: 0;
+    /* A slight overshoot on the transform approximates the "settles into
+       place" spring feel without a full physics/JS animation loop. */
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+html.is-ios .segmented-glass { display: block; }
+.segmented-glass.no-anim { transition: none; }
+html.is-ios .segmented-control button.active {
+    background: none; box-shadow: none; /* the glass lens supplies the highlight instead */
 }
 
 .accent-swatches { display: flex; gap: 12px; flex-wrap: wrap; }
